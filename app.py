@@ -62,155 +62,25 @@ def regime_ai_allocation(regime):
 # =====================================================
 def calculate_drawdown(series):
     cumulative_max = series.cummax()
-    drawdown = (series - cumulative_max) / cumulative_max
-    return drawdown
+    return (series - cumulative_max) / cumulative_max
 
 # =====================================================
-# LEARNING INSIGHTS (UNCHANGED)
+# LEARNING INSIGHTS
 # =====================================================
 learning_insights = {
-    "Rate Hike": """### 🔍 What Happened?
-Central banks raised policy rates.  
-Higher discount rates reduce equity valuations.
-
-### 📊 Asset Behaviour
-• Growth equities fall  
-• Bonds stabilise after shock  
-• Gold hedges uncertainty  
-
-### 🎓 Reflection
-Did you reduce risk?  
-Did you stay overweight equities?
-""",
-    "Growth Rally": """### 🔍 What Happened?
-Strong earnings + tech optimism drove markets higher.
-
-### 📊 Asset Behaviour
-• Equities & crypto rally  
-• Bonds lag  
-• Cash becomes drag  
-
-### 🎓 Reflection
-Did you capture upside or stay defensive?
-""",
-    "Crisis": """### 🔍 What Happened?
-Geopolitical or financial shock triggered risk-off.
-
-### 📊 Asset Behaviour
-• Bonds + gold outperform  
-• Equities fall  
-• Diversification matters most  
-
-### 🎓 Reflection
-Did your portfolio hedge downside?
-""",
-    "Disinflation": """### 🔍 What Happened?
-Inflation cooled, reducing macro uncertainty.
-
-### 📊 Asset Behaviour
-• Bonds rally  
-• Equities recover  
-• Balanced portfolios win  
-
-### 🎓 Reflection
-Did you increase risk at the right time?
-""",
-    "Recession": """### 🔍 What Happened?
-Growth slowdown → defensive rotation.
-
-### 📊 Asset Behaviour
-• Bonds protect  
-• Gold stable  
-• Risk assets fall  
-
-### 🎓 Reflection
-Was your portfolio concentrated?
-""",
-    "Liquidity": """### 🔍 What Happened?
-Central bank liquidity boosted markets.
-
-### 📊 Asset Behaviour
-• Equities surge  
-• Crypto rallies  
-• Cash underperforms  
-
-### 🎓 Reflection
-Did you position for expansion?
-""",
-    "Inflation": """### 🔍 What Happened?
-Inflation shock hit duration assets.
-
-### 📊 Asset Behaviour
-• Bonds fall  
-• Gold hedges  
-• Equities pressured  
-
-### 🎓 Reflection
-Did you hedge inflation?
-""",
-    "Credit": """### 🔍 What Happened?
-Credit tightening increased stress.
-
-### 📊 Asset Behaviour
-• Defensive assets outperform  
-• Risk appetite falls  
-
-### 🎓 Reflection
-Did you rotate defensively?
-""",
-    "Mixed": """### 🔍 What Happened?
-Conflicting signals in markets.
-
-### 📊 Asset Behaviour
-• Balanced allocation helps  
-• Overconfidence hurts  
-
-### 🎓 Reflection
-Did you stay disciplined?
-""",
-    "Tech Correction": """### 🔍 What Happened?
-High-growth tech sold off sharply.
-
-### 📊 Asset Behaviour
-• US equities fall  
-• Crypto drops  
-• Bonds help  
-
-### 🎓 Reflection
-Were you overexposed to growth?
-""",
-    "Commodity Boom": """### 🔍 What Happened?
-Commodity prices surged globally.
-
-### 📊 Asset Behaviour
-• Gold rises  
-• EM equities benefit  
-• Bonds weak  
-
-### 🎓 Reflection
-Did you hold real assets?
-""",
-    "Soft Landing": """### 🔍 What Happened?
-Growth slowed but avoided recession.
-
-### 📊 Asset Behaviour
-• Balanced portfolios win  
-• Low volatility environment  
-
-### 🎓 Reflection
-Did you stay diversified?
-""",
-    "Dollar Surge": """### 🔍 What Happened?
-Strong USD tightened global liquidity.
-
-### 📊 Asset Behaviour
-• EM equities struggle  
-• Gold weak  
-• US assets hold  
-
-### 🎓 Reflection
-Did you diversify globally?
-"""
+    "Rate Hike": "Central banks raised policy rates. Growth equities suffer.",
+    "Growth Rally": "Strong earnings & optimism. Risk assets rally.",
+    "Crisis": "Risk-off event. Defensive assets outperform.",
+    "Disinflation": "Inflation cools. Bonds rally.",
+    "Recession": "Growth slowdown. Defensive rotation.",
+    "Liquidity": "Central bank liquidity boosts markets.",
+    "Inflation": "Inflation shock hurts bonds.",
+    "Credit": "Credit stress increases volatility.",
+    "Mixed": "Conflicting signals. Discipline matters.",
+    "Tech Correction": "High-growth tech sells off.",
+    "Commodity Boom": "Commodities surge globally.",
+    "Soft Landing": "Growth slows but avoids recession.",
+    "Dollar Surge": "Strong USD pressures EM."
 }
 
 # =====================================================
@@ -303,7 +173,7 @@ if rd > 10:
     bsharpe = br.mean()/(br.std()+1e-9)*np.sqrt(10)
     ssharpe = sr.mean()/(sr.std()+1e-9)*np.sqrt(10)
 
-    col1, col2, col3 = st.columns(3)
+    col1,col2,col3 = st.columns(3)
     col1.metric("Your Sharpe", round(sharpe,3))
     col2.metric("Benchmark Sharpe", round(bsharpe,3))
     col3.metric("Regime AI Sharpe", round(ssharpe,3))
@@ -319,60 +189,62 @@ if rd > 10:
 
     st.subheader("Drawdown Comparison")
 
-    dd_student = calculate_drawdown(hist["Value"])
-    dd_bench = calculate_drawdown(bench_hist["Value"])
-    dd_ai = calculate_drawdown(smart_hist["Value"])
-
     dd_df = pd.DataFrame({
-        "Student": dd_student,
-        "Benchmark": dd_bench,
-        "Regime AI": dd_ai
+        "Student": calculate_drawdown(hist["Value"]),
+        "Benchmark": calculate_drawdown(bench_hist["Value"]),
+        "Regime AI": calculate_drawdown(smart_hist["Value"])
     })
 
     st.line_chart(dd_df)
 
-    st.subheader("Behaviour Radar Analysis")
+    # =====================================================
+    # BEHAVIOURAL RADAR
+    # =====================================================
+    st.subheader("Behavioural Profile Radar")
 
-    avg_alloc = alloc_hist.drop(columns=["Round"]).mean()
-    ai_example = regime_ai_allocation("Mixed")
-    ai_series = pd.Series(ai_example) * 100
-    bench_series = pd.Series({a:100/len(avg_alloc) for a in avg_alloc.index})
+    avg = alloc_hist.drop(columns=["Round"]).mean()
 
-    categories = avg_alloc.index.tolist()
+    risk = avg["Indian Equity"] + avg["US Equity"] + avg["Crypto"]
+    safety = avg["Bonds"] + avg["Gold"] + avg["Cash"]
+    home_bias = avg["Indian Equity"]/(avg["Indian Equity"]+avg["US Equity"]+1e-9)*100
+    diversification = 100 - avg.std()*2
+    timing = 100 - alloc_hist.drop(columns=["Round"]).std().mean()*2
+    deployment = 100 - avg["Cash"]
+
+    student_profile = [risk,safety,home_bias,diversification,timing,deployment]
+    benchmark_profile = [50,50,50,70,70,80]
+    ai_profile = [60,60,40,85,80,90]
+
+    categories = ["Risk Taking","Safety Preference","Home Bias",
+                  "Diversification","Timing Discipline","Capital Deployment"]
 
     fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(r=student_profile,theta=categories,fill='toself',name='Student'))
+    fig.add_trace(go.Scatterpolar(r=benchmark_profile,theta=categories,fill='toself',name='Benchmark'))
+    fig.add_trace(go.Scatterpolar(r=ai_profile,theta=categories,fill='toself',name='Regime AI'))
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0,100])),showlegend=True)
 
-    fig.add_trace(go.Scatterpolar(r=avg_alloc.values,theta=categories,fill='toself',name='Student'))
-    fig.add_trace(go.Scatterpolar(r=bench_series.values,theta=categories,fill='toself',name='Benchmark'))
-    fig.add_trace(go.Scatterpolar(r=ai_series.values,theta=categories,fill='toself',name='Regime AI'))
-
-    fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,50])),showlegend=True)
     st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("Download Full Results")
+    # =====================================================
+    # EXCEL EXPORT
+    # =====================================================
+    st.subheader("Download Excel Report")
 
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        compare.to_excel(writer, sheet_name='Performance', index=False)
-        dd_df.to_excel(writer, sheet_name='Drawdown', index=False)
-        alloc_hist.to_excel(writer, sheet_name='Allocations', index=False)
+    with pd.ExcelWriter(output) as writer:
+        compare.to_excel(writer, sheet_name="Performance", index=False)
+        dd_df.to_excel(writer, sheet_name="Drawdown", index=False)
+        alloc_hist.to_excel(writer, sheet_name="Allocations", index=False)
 
     output.seek(0)
 
     st.download_button(
-        label="Download Excel Report",
+        label="Download WarRoom Report",
         data=output,
         file_name="Portfolio_WarRoom_Report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-    st.subheader("Strategic Reflection")
-    st.write("""
-    - Did you adapt across regimes?
-    - Did diversification protect you?
-    - Did AI outperform you?
-    - Were your decisions systematic or emotional?
-    """)
 
     st.stop()
 
@@ -439,8 +311,8 @@ if st.session_state.submitted:
     st.info(learning_insights.get(regime,""))
 
     st.markdown("### 🤖 Regime AI Allocation")
+
     ai_alloc = regime_ai_allocation(regime)
-    
     ai_df = pd.DataFrame({
         "Asset": ai_alloc.keys(),
         "AI Weight %":[v*100 for v in ai_alloc.values()]
