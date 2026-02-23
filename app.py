@@ -21,7 +21,6 @@ defaults = {
     "submitted": False,
     "scenario_sequence": [],
     "confidence": 50,
-    "emotion_log": [],
     "alloc_history": [],
     "confidence_log": []
 }
@@ -31,7 +30,7 @@ for k, v in defaults.items():
         st.session_state[k] = v
 
 # =====================================================
-# RESET FUNCTION
+# RESET
 # =====================================================
 def reset_all():
     for k in list(st.session_state.keys()):
@@ -39,7 +38,7 @@ def reset_all():
     st.rerun()
 
 # =====================================================
-# REGIME AI MODEL
+# REGIME AI
 # =====================================================
 def regime_ai_allocation(regime):
 
@@ -114,7 +113,7 @@ if not st.session_state.initialized:
         scenario_pool = [
             ("Liquidity","Global liquidity injection",
              {"Indian Equity":0.11,"US Equity":0.13,"Bonds":0.03,"Gold":-0.02,"Crypto":0.20,"Cash":0.01}),
-            ("Inflation","Oil price shock",
+            ("Inflation","Oil shock",
              {"Indian Equity":-0.06,"US Equity":-0.05,"Bonds":-0.03,"Gold":0.07,"Crypto":-0.04,"Cash":0.01}),
             ("Credit","Banking stress",
              {"Indian Equity":-0.09,"US Equity":-0.08,"Bonds":0.05,"Gold":0.07,"Crypto":-0.10,"Cash":0.01}),
@@ -137,14 +136,16 @@ if not st.session_state.initialized:
     st.stop()
 
 # =====================================================
-# HEADER
+# HEADER METRICS
 # =====================================================
 c1, c2, c3 = st.columns(3)
 c1.metric("Portfolio", f"₹{int(st.session_state.portfolio_value):,}")
 c2.metric("Benchmark", f"₹{int(st.session_state.bench_value):,}")
 c3.metric("AI Fund", f"₹{int(st.session_state.smart_value):,}")
 
-st.progress(st.session_state.round/10)
+# SAFE PROGRESS BAR
+progress_val = min(st.session_state.round-1, 10)/10
+st.progress(progress_val)
 
 if st.button("Reset Simulation"):
     reset_all()
@@ -159,15 +160,14 @@ if rd > 10:
     st.header("Final Performance Dashboard")
 
     hist = pd.DataFrame(st.session_state.history)
-    bench_hist = pd.DataFrame(st.session_state.bench_history)
-    smart_hist = pd.DataFrame(st.session_state.smart_history)
+    bench = pd.DataFrame(st.session_state.bench_history)
+    smart = pd.DataFrame(st.session_state.smart_history)
 
     compare = pd.DataFrame({
         "Student": hist["Value"],
-        "Benchmark": bench_hist["Value"],
-        "Regime AI": smart_hist["Value"]
+        "Benchmark": bench["Value"],
+        "Regime AI": smart["Value"]
     })
-
     st.line_chart(compare)
 
     def sharpe(x):
@@ -175,8 +175,8 @@ if rd > 10:
         return (r.mean()/(r.std()+1e-9))*np.sqrt(10)
 
     st.metric("Student Sharpe", round(sharpe(hist["Value"]),2))
-    st.metric("Benchmark Sharpe", round(sharpe(bench_hist["Value"]),2))
-    st.metric("AI Sharpe", round(sharpe(smart_hist["Value"]),2))
+    st.metric("Benchmark Sharpe", round(sharpe(bench["Value"]),2))
+    st.metric("AI Sharpe", round(sharpe(smart["Value"]),2))
 
     # =====================================================
     # BEHAVIOUR RADAR
@@ -186,12 +186,11 @@ if rd > 10:
     alloc_df = pd.DataFrame(st.session_state.alloc_history)
 
     if not alloc_df.empty:
-
         risk = alloc_df[["Indian Equity","US Equity","Crypto"]].sum(axis=1).mean()
         div = alloc_df.apply(lambda x: (x>0).sum(), axis=1).mean()*15
         timing = (hist["Value"].pct_change()>0).mean()*100
         ai_align = 50 + random.randint(-10,10)
-        conf = np.mean(st.session_state.confidence_log) if st.session_state.confidence_log else 50
+        conf = np.mean(st.session_state.confidence_log)
 
         behaviour = pd.DataFrame({
             "Metric":["Risk Taking","Diversification","Timing","AI Alignment","Confidence"],
@@ -206,19 +205,12 @@ if rd > 10:
     # =====================================================
     st.subheader("Download Excel Report")
 
-    alloc = pd.DataFrame(st.session_state.alloc_history)
-
     writer = pd.ExcelWriter("warroom_report.xlsx", engine="xlsxwriter")
-
     hist.to_excel(writer, sheet_name="Student")
-    bench_hist.to_excel(writer, sheet_name="Benchmark")
-    smart_hist.to_excel(writer, sheet_name="AI")
-    alloc.to_excel(writer, sheet_name="Allocations")
-
-    pd.DataFrame({
-        "Confidence": st.session_state.confidence_log
-    }).to_excel(writer, sheet_name="Confidence")
-
+    bench.to_excel(writer, sheet_name="Benchmark")
+    smart.to_excel(writer, sheet_name="AI")
+    pd.DataFrame(st.session_state.alloc_history).to_excel(writer, sheet_name="Allocations")
+    pd.DataFrame({"Confidence": st.session_state.confidence_log}).to_excel(writer, sheet_name="Confidence")
     writer.close()
 
     with open("warroom_report.xlsx","rb") as f:
