@@ -11,7 +11,7 @@ from reportlab.lib.units import inch
 st.set_page_config(page_title="Portfolio War-Room Simulation", layout="wide")
 
 # =====================================================
-# SESSION STATE DEFAULTS
+# SESSION DEFAULTS
 # =====================================================
 defaults = {
     "initialized": False,
@@ -27,7 +27,6 @@ defaults = {
     "scenario_sequence": [],
     "leaderboard": []
 }
-
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -54,26 +53,26 @@ def regime_ai_allocation(regime):
         return {"Indian Equity":0.2,"US Equity":0.2,"Bonds":0.2,"Gold":0.2,"Crypto":0.1,"Cash":0.1}
 
 # =====================================================
-# DETAILED LEARNING INSIGHTS
+# LEARNING INSIGHTS
 # =====================================================
 learning_insights = {
-"Rate Hike": """Higher policy rates compress equity valuations. Defensive assets tend to stabilise portfolios.""",
-"Growth Rally": """Strong optimism drives equities and crypto higher. Cash becomes underutilised.""",
-"Crisis": """Risk-off regime. Bonds and gold typically protect capital.""",
-"Disinflation": """Cooling inflation supports bonds and balanced allocation.""",
-"Recession": """Growth slowdown favours defensive positioning.""",
-"Liquidity": """Liquidity expansion lifts risk assets broadly.""",
-"Inflation": """Inflation pressures bonds. Real assets hedge.""",
-"Credit": """Financial stress leads to defensive rotation.""",
-"Mixed": """Conflicting signals reward diversification.""",
-"Tech Correction": """High-growth equities correct sharply.""",
-"Commodity Boom": """Real assets and gold outperform.""",
-"Soft Landing": """Moderate growth supports balanced portfolios.""",
-"Dollar Surge": """Strong USD pressures emerging markets."""
+"Rate Hike":"Rates rise → equities pressured, defensive assets help.",
+"Growth Rally":"Risk assets surge in optimistic growth cycles.",
+"Crisis":"Risk-off regime. Bonds & gold protect capital.",
+"Disinflation":"Falling inflation supports bonds and balance.",
+"Recession":"Defensive positioning usually performs better.",
+"Liquidity":"Liquidity boosts risk assets broadly.",
+"Inflation":"Real assets hedge inflation shocks.",
+"Credit":"Financial stress → defensive rotation.",
+"Mixed":"Diversification reduces regret.",
+"Tech Correction":"High-growth stocks correct sharply.",
+"Commodity Boom":"Real assets outperform.",
+"Soft Landing":"Balanced portfolios perform well.",
+"Dollar Surge":"Strong USD pressures EM assets."
 }
 
 # =====================================================
-# BEHAVIOURAL ANALYSIS
+# BEHAVIOUR ANALYSIS
 # =====================================================
 def behavioural_analysis(alloc_history, values):
     df = pd.DataFrame(alloc_history)
@@ -108,11 +107,10 @@ def advanced_metrics(alloc_history, history, smart_history):
     regret = round(max(0,(ai_vals - student_vals).max()/student_vals.iloc[0]*100),2)
 
     timing = round((student_vals.pct_change().corr(ai_vals.pct_change())+1)*50,2)
-
     return overtrade, regret, timing
 
 # =====================================================
-# PROFESSOR-STYLE COMMENTARY
+# PROFESSOR COMMENTARY
 # =====================================================
 def generate_ai_commentary(div,risk,overtrade,regret,timing,profile):
     text = "This performance reflects decision discipline across regimes. "
@@ -125,7 +123,7 @@ def generate_ai_commentary(div,risk,overtrade,regret,timing,profile):
     if overtrade>70:
         text += "Frequent reallocations suggest tactical over-adjustment. "
     if regret>15:
-        text += "There were clear regimes where the systematic model outperformed materially. "
+        text += "There were regimes where the systematic model outperformed materially. "
     if timing>70:
         text += "Market timing aligned well with macro shifts. "
     text += f"Overall behavioural classification: {profile}."
@@ -139,30 +137,31 @@ def generate_pdf_report(filename,data,commentary):
     elements = []
     styles = getSampleStyleSheet()
 
-    elements.append(Paragraph("<b>Simulation Performance Report</b>", styles['Title']))
+    elements.append(Paragraph("<b>Portfolio Simulation Report</b>", styles['Title']))
     elements.append(Spacer(1,0.3*inch))
 
     table = Table(data)
-    table.setStyle(TableStyle([
-        ('GRID',(0,0),(-1,-1),0.5,colors.grey)
-    ]))
+    table.setStyle(TableStyle([('GRID',(0,0),(-1,-1),0.5,colors.grey)]))
     elements.append(table)
     elements.append(Spacer(1,0.3*inch))
 
     elements.append(Paragraph("<b>AI Commentary</b>", styles['Heading2']))
     elements.append(Paragraph(commentary, styles['Normal']))
+    elements.append(Spacer(1,0.3*inch))
+
+    elements.append(Paragraph(
+        "© 2026 Prof. Shalini Velappan | IIM Tiruchirappalli. Academic teaching use only.",
+        styles['Normal']
+    ))
 
     doc.build(elements)
 
 # =====================================================
-# TITLE + INSTRUCTOR TOGGLE
+# TITLE + INSTRUCTOR MODE
 # =====================================================
 st.title("Portfolio War-Room Simulation")
 instructor_mode = st.toggle("Instructor Dashboard Mode", value=False)
 
-# =====================================================
-# INSTRUCTOR DASHBOARD
-# =====================================================
 if instructor_mode and st.session_state.leaderboard:
     st.header("Instructor Dashboard")
     lb = pd.DataFrame(st.session_state.leaderboard)
@@ -202,9 +201,71 @@ if not st.session_state.initialized:
     st.stop()
 
 # =====================================================
-# ROUND EXECUTION
+# ROUND LOGIC
 # =====================================================
 rd = st.session_state.round
+
+if rd > 10:
+    hist=pd.DataFrame(st.session_state.history)
+    r=hist["Value"].pct_change().dropna()
+    sharpe=r.mean()/(r.std()+1e-9)*np.sqrt(10)
+
+    st.header("Final Dashboard")
+    st.metric("Final Value", f"₹{int(st.session_state.portfolio_value):,}")
+    st.metric("Sharpe", round(sharpe,3))
+
+    st.line_chart(pd.DataFrame({
+        "Student":hist["Value"],
+        "Benchmark":pd.DataFrame(st.session_state.bench_history)["Value"],
+        "AI":pd.DataFrame(st.session_state.smart_history)["Value"]
+    }))
+
+    div,risk,dd,profile=behavioural_analysis(
+        st.session_state.alloc_history,
+        [x["Value"] for x in st.session_state.history]
+    )
+    overtrade,regret,timing=advanced_metrics(
+        st.session_state.alloc_history,
+        st.session_state.history,
+        st.session_state.smart_history
+    )
+
+    commentary=generate_ai_commentary(div,risk,overtrade,regret,timing,profile)
+    st.info(commentary)
+
+    radar=go.Figure()
+    radar.add_trace(go.Scatterpolar(
+        r=[div,risk,100-overtrade,timing],
+        theta=["Diversification","Risk Control","Discipline","Timing"],
+        fill='toself'))
+    st.plotly_chart(radar,use_container_width=True)
+
+    st.session_state.leaderboard.append({
+        "Final Value":st.session_state.portfolio_value,
+        "Sharpe":round(sharpe,3),
+        "Regret":regret
+    })
+    st.dataframe(pd.DataFrame(st.session_state.leaderboard)
+                 .sort_values("Final Value",ascending=False))
+
+    data=[
+        ["Final Value",f"₹{int(st.session_state.portfolio_value):,}"],
+        ["Sharpe",round(sharpe,3)],
+        ["Diversification",div],
+        ["Risk Control",risk],
+        ["Overtrading",overtrade],
+        ["Regret",regret],
+        ["Timing",timing],
+        ["Profile",profile]
+    ]
+
+    file="report.pdf"
+    generate_pdf_report(file,data,commentary)
+    with open(file,"rb") as f:
+        st.download_button("Download PDF Report",f,"Performance_Report.pdf")
+    st.stop()
+
+# NORMAL ROUND
 regime,news,returns = st.session_state.scenario_sequence[rd-1]
 
 st.header(f"Round {rd}")
@@ -247,12 +308,7 @@ if st.session_state.submitted:
     st.success("Returns Revealed")
     st.write(pd.DataFrame({"Asset":returns.keys(),
                            "Return %":[returns[a]*100 for a in returns]}))
-
-    st.markdown("### Market Insight")
     st.info(learning_insights.get(regime,""))
-
-    st.markdown("### 🤖 Regime AI Allocation")
-    st.dataframe(pd.DataFrame(regime_ai_allocation(regime),index=["Weight"]).T)
 
     if st.button("Next Round"):
         st.session_state.round+=1
@@ -260,86 +316,13 @@ if st.session_state.submitted:
         st.rerun()
 
 # =====================================================
-# FINAL DASHBOARD
+# FOOTER
 # =====================================================
-if rd>10:
-    st.header("Final Performance Dashboard")
-
-    hist=pd.DataFrame(st.session_state.history)
-    bench=pd.DataFrame(st.session_state.bench_history)
-    smart=pd.DataFrame(st.session_state.smart_history)
-
-    r=hist["Value"].pct_change().dropna()
-    sharpe=r.mean()/(r.std()+1e-9)*np.sqrt(10)
-
-    st.metric("Final Value", f"₹{int(st.session_state.portfolio_value):,}")
-    st.metric("Sharpe Ratio", round(sharpe,3))
-
-    st.line_chart(pd.DataFrame({
-        "Student":hist["Value"],
-        "Benchmark":bench["Value"],
-        "AI":smart["Value"]
-    }))
-
-    div,risk,dd,profile=behavioural_analysis(
-        st.session_state.alloc_history,
-        [x["Value"] for x in st.session_state.history]
-    )
-
-    overtrade,regret,timing=advanced_metrics(
-        st.session_state.alloc_history,
-        st.session_state.history,
-        st.session_state.smart_history
-    )
-
-    commentary=generate_ai_commentary(div,risk,overtrade,regret,timing,profile)
-
-    st.subheader("Behavioural Radar")
-    radar=go.Figure()
-    radar.add_trace(go.Scatterpolar(
-        r=[div,risk,100-overtrade,timing],
-        theta=["Diversification","Risk Control","Discipline","Timing"],
-        fill='toself'))
-    st.plotly_chart(radar,use_container_width=True)
-
-    st.subheader("AI Commentary")
-    st.info(commentary)
-
-    # Regret heatmap
-    student_vals=pd.Series([x["Value"] for x in st.session_state.history])
-    ai_vals=pd.Series([x["Value"] for x in st.session_state.smart_history])
-    regret_series=ai_vals-student_vals
-    st.subheader("AI vs Student Regret")
-    st.bar_chart(regret_series)
-
-    # Leaderboard
-    st.session_state.leaderboard.append({
-        "Final Value":st.session_state.portfolio_value,
-        "Sharpe":round(sharpe,3),
-        "Regret":regret,
-        "Timing":timing
-    })
-
-    st.subheader("Class Leaderboard")
-    st.dataframe(pd.DataFrame(st.session_state.leaderboard)
-                 .sort_values("Final Value",ascending=False))
-
-    # PDF
-    data=[
-        ["Final Value",f"₹{int(st.session_state.portfolio_value):,}"],
-        ["Sharpe",round(sharpe,3)],
-        ["Diversification",div],
-        ["Risk Control",risk],
-        ["Overtrading",overtrade],
-        ["Regret",regret],
-        ["Timing",timing],
-        ["Profile",profile]
-    ]
-
-    file="report.pdf"
-    generate_pdf_report(file,data,commentary)
-
-    with open(file,"rb") as f:
-        st.download_button("Download PDF Report",f,"Performance_Report.pdf")
-
-    st.stop()
+st.markdown("""
+---
+<div style='text-align:center; font-size:13px; color:gray'>
+Portfolio War-Room Simulation  
+© 2026 Prof. Shalini Velappan | IIM Tiruchirappalli  
+For academic teaching use only
+</div>
+""", unsafe_allow_html=True)
