@@ -225,6 +225,123 @@ if rd > 10:
     fig.update_layout(polar=dict(radialaxis=dict(visible=True,range=[0,100])),showlegend=True)
 
     st.plotly_chart(fig, use_container_width=True)
+    # =====================================================
+    # INTERPRETATION PANEL
+    # =====================================================
+    st.divider()
+    st.header("Simulation Interpretation & Learning")
+    
+    final_value = hist["Value"].iloc[-1]
+    bench_value = bench_hist["Value"].iloc[-1]
+    ai_value = smart_hist["Value"].iloc[-1]
+    
+    # ---------------- PERFORMANCE SUMMARY ----------------
+    st.subheader("Performance Summary")
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Your Final Value", f"₹{int(final_value):,}")
+    col2.metric("Benchmark", f"₹{int(bench_value):,}")
+    col3.metric("Regime AI", f"₹{int(ai_value):,}")
+    
+    # ---------------- PERFORMANCE INTERPRETATION ----------------
+    if final_value > ai_value:
+        perf_msg = "Outstanding. You outperformed the AI regime strategy."
+    elif final_value > bench_value:
+        perf_msg = "Good performance. You beat the passive benchmark."
+    else:
+        perf_msg = "Your portfolio underperformed. Focus on allocation discipline."
+    
+    st.info(perf_msg)
+    
+    # ---------------- RADAR INTERPRETATION ----------------
+    st.subheader("Behavioural Radar Interpretation")
+    
+    st.markdown("""
+    The radar chart reflects your **investment personality** across six dimensions:
+    
+    **Risk Taking** → Exposure to equities & crypto  
+    **Safety Preference** → Allocation to bonds, gold, cash  
+    **Home Bias** → Preference for Indian vs global assets  
+    **Diversification** → Spread across asset classes  
+    **Timing Discipline** → Stability of allocation across rounds  
+    **Capital Deployment** → Avoiding idle cash  
+    
+    A balanced professional allocator typically shows:
+    - Moderate risk
+    - High diversification
+    - Stable timing
+    - Low cash drag
+    """)
+    
+    # ---------------- STYLE DIAGNOSIS ----------------
+    st.subheader("Your Investment Style Diagnosis")
+    
+    if risk > 70:
+        style = "Aggressive risk taker"
+    elif risk < 40:
+        style = "Defensive allocator"
+    else:
+        style = "Balanced allocator"
+    
+    st.write(f"**Style Identified:** {style}")
+    
+    if diversification < 50:
+        st.warning("Your portfolio lacked diversification. Concentration risk was high.")
+    
+    if timing < 50:
+        st.warning("Your allocations changed too frequently. This indicates reactive decision-making.")
+    
+    if deployment < 60:
+        st.warning("Too much cash drag. Capital was not fully deployed.")
+    
+    if home_bias > 75:
+        st.warning("Strong home bias. Consider global diversification.")
+    
+    # ---------------- LEARNING POINTS ----------------
+    st.subheader("Key Learning Points")
+    
+    st.markdown("""
+    **1. Asset allocation drives outcomes more than stock picking**  
+    Most performance differences came from allocation decisions.
+    
+    **2. Regime awareness matters**  
+    Different macro environments require different positioning.
+    
+    **3. Diversification protects drawdowns**  
+    Portfolios with balanced exposure fell less during crises.
+    
+    **4. Behaviour impacts returns**  
+    Emotional shifts across rounds reduce performance.
+    
+    **5. Systematic strategy beats reactive strategy**  
+    AI allocations were stable and disciplined.
+    """)
+    
+    # ---------------- FOCUS AREAS ----------------
+    st.subheader("Focus Areas To Improve")
+    
+    focus = []
+    
+    if diversification < 60:
+        focus.append("Improve diversification across asset classes")
+    
+    if timing < 60:
+        focus.append("Maintain consistent allocation strategy")
+    
+    if risk > 75:
+        focus.append("Reduce excessive risk concentration")
+    
+    if risk < 30:
+        focus.append("Avoid being overly defensive in growth regimes")
+    
+    if deployment < 70:
+        focus.append("Reduce idle cash and deploy capital efficiently")
+    
+    if not focus:
+        focus.append("Strong allocation discipline. Continue refining regime awareness.")
+    
+    for f in focus:
+        st.write(f"• {f}")
 
     # =====================================================
     # EXCEL EXPORT
