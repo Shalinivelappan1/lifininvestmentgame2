@@ -229,24 +229,25 @@ if rd > 10:
     # =====================================================
     # EXCEL EXPORT
     # =====================================================
+    # EXCEL EXPORT (STREAMLIT CLOUD SAFE)
+    # =====================================================
     st.subheader("Download Excel Report")
-
+    
     output = io.BytesIO()
-    with pd.ExcelWriter(output) as writer:
+    
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
         compare.to_excel(writer, sheet_name="Performance", index=False)
         dd_df.to_excel(writer, sheet_name="Drawdown", index=False)
         alloc_hist.to_excel(writer, sheet_name="Allocations", index=False)
-
+    
     output.seek(0)
-
+    
     st.download_button(
         label="Download WarRoom Report",
-        data=output,
+        data=output.getvalue(),
         file_name="Portfolio_WarRoom_Report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-    st.stop()
 
 # =====================================================
 # ROUND EXECUTION
