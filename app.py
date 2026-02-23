@@ -202,73 +202,73 @@ c4.metric(f"{leader_mark(ai_val)} AI",f"₹{int(ai_val):,}")
 # =====================================================
 # FINAL DASHBOARD
 # =====================================================
-if rd>10:
-    hist=pd.DataFrame(st.session_state.history)
-    bench=pd.DataFrame(st.session_state.bench_history)
-    smart=pd.DataFrame(st.session_state.smart_history)
-
-    r=hist["Value"].pct_change().dropna()
-    br=bench["Value"].pct_change().dropna()
-    sr=smart["Value"].pct_change().dropna()
-
-    sharpe_s=r.mean()/(r.std()+1e-9)*np.sqrt(10)
-    sharpe_b=br.mean()/(br.std()+1e-9)*np.sqrt(10)
-    sharpe_ai=sr.mean()/(sr.std()+1e-9)*np.sqrt(10)
-
-    dd_s=max_drawdown(hist["Value"])
-    dd_b=max_drawdown(bench["Value"])
-    dd_ai=max_drawdown(smart["Value"])
-
-    st.header("Final Performance")
-
-    c1,c2,c3 = st.columns(3)
-    c1.metric("Student Sharpe",round(sharpe_s,3))
-    c2.metric("Benchmark Sharpe",round(sharpe_b,3))
-    c3.metric("AI Sharpe",round(sharpe_ai,3))
-
-    d1,d2,d3 = st.columns(3)
-    d1.metric("Student DD",round(dd_s,1))
-    d2.metric("Benchmark DD",round(dd_b,1))
-    d3.metric("AI DD",round(dd_ai,1))
-
-    st.line_chart(pd.DataFrame({
-        "Student":hist["Value"],
-        "Benchmark":bench["Value"],
-        "AI":smart["Value"]
-    }))
-
-    div,risk,overtrade=behavioural_scores(st.session_state.alloc_history)
-    regret,timing=regret_timing(st.session_state.history,st.session_state.smart_history)
-
-    com=commentary(div,risk,overtrade,regret,timing)
-    st.info(com)
-
-    radar=go.Figure()
-    radar.add_trace(go.Scatterpolar(
-        r=[div,risk,100-overtrade,timing],
-        theta=["Diversification","Risk","Discipline","Timing"],
-        fill='toself'))
-    st.plotly_chart(radar,use_container_width=True)
-
-    data=[
-        ["Student Sharpe",round(sharpe_s,3)],
-        ["Benchmark Sharpe",round(sharpe_b,3)],
-        ["AI Sharpe",round(sharpe_ai,3)],
-        ["Student DD",round(dd_s,1)],
-        ["Benchmark DD",round(dd_b,1)],
-        ["AI DD",round(dd_ai,1)]
-    ]
-
-    pdf_buffer = generate_pdf_bytes(data, com)
-
-    st.download_button(
-        label="📄 Download Performance Report",
-        data=pdf_buffer,
-        file_name="Portfolio_Report.pdf",
-        mime="application/pdf"
-    )
-
-    st.success("Simulation complete. You can download the report above.")
+    if rd>10:
+        hist=pd.DataFrame(st.session_state.history)
+        bench=pd.DataFrame(st.session_state.bench_history)
+        smart=pd.DataFrame(st.session_state.smart_history)
+    
+        r=hist["Value"].pct_change().dropna()
+        br=bench["Value"].pct_change().dropna()
+        sr=smart["Value"].pct_change().dropna()
+    
+        sharpe_s=r.mean()/(r.std()+1e-9)*np.sqrt(10)
+        sharpe_b=br.mean()/(br.std()+1e-9)*np.sqrt(10)
+        sharpe_ai=sr.mean()/(sr.std()+1e-9)*np.sqrt(10)
+    
+        dd_s=max_drawdown(hist["Value"])
+        dd_b=max_drawdown(bench["Value"])
+        dd_ai=max_drawdown(smart["Value"])
+    
+        st.header("Final Performance")
+    
+        c1,c2,c3 = st.columns(3)
+        c1.metric("Student Sharpe",round(sharpe_s,3))
+        c2.metric("Benchmark Sharpe",round(sharpe_b,3))
+        c3.metric("AI Sharpe",round(sharpe_ai,3))
+    
+        d1,d2,d3 = st.columns(3)
+        d1.metric("Student DD",round(dd_s,1))
+        d2.metric("Benchmark DD",round(dd_b,1))
+        d3.metric("AI DD",round(dd_ai,1))
+    
+        st.line_chart(pd.DataFrame({
+            "Student":hist["Value"],
+            "Benchmark":bench["Value"],
+            "AI":smart["Value"]
+        }))
+    
+        div,risk,overtrade=behavioural_scores(st.session_state.alloc_history)
+        regret,timing=regret_timing(st.session_state.history,st.session_state.smart_history)
+    
+        com=commentary(div,risk,overtrade,regret,timing)
+        st.info(com)
+    
+        radar=go.Figure()
+        radar.add_trace(go.Scatterpolar(
+            r=[div,risk,100-overtrade,timing],
+            theta=["Diversification","Risk","Discipline","Timing"],
+            fill='toself'))
+        st.plotly_chart(radar,use_container_width=True)
+    
+        data=[
+            ["Student Sharpe",round(sharpe_s,3)],
+            ["Benchmark Sharpe",round(sharpe_b,3)],
+            ["AI Sharpe",round(sharpe_ai,3)],
+            ["Student DD",round(dd_s,1)],
+            ["Benchmark DD",round(dd_b,1)],
+            ["AI DD",round(dd_ai,1)]
+        ]
+    
+        pdf_buffer = generate_pdf_bytes(data, com)
+    
+        st.download_button(
+            label="📄 Download Performance Report",
+            data=pdf_buffer,
+            file_name="Portfolio_Report.pdf",
+            mime="application/pdf"
+        )
+    
+        st.success("Simulation complete. You can download the report above.")
 
 # =====================================================
 # NORMAL ROUND
