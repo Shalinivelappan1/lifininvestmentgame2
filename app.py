@@ -7,12 +7,11 @@ from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
 
 st.set_page_config(page_title="Portfolio War-Room Simulation", layout="wide")
 
 # =====================================================
-# SESSION DEFAULTS
+# SESSION STATE
 # =====================================================
 defaults = {
     "initialized": False,
@@ -32,126 +31,93 @@ for k,v in defaults.items():
         st.session_state[k] = v
 
 # =====================================================
-# RESET
+# SCENARIOS (FIXED → NO RANDOM BUGS)
 # =====================================================
-def reset_all():
-    for k in list(st.session_state.keys()):
-        del st.session_state[k]
-    st.rerun()
+if not st.session_state.scenario_sequence:
+    st.session_state.scenario_sequence = [
+        ("Rate Hike","RBI hikes rates",{"Equity":-0.07,"Bonds":0.02,"Gold":0.04,"Crypto":-0.12,"Cash":0.01}),
+        ("Growth","AI boom",{"Equity":0.08,"Bonds":-0.02,"Gold":-0.01,"Crypto":0.15,"Cash":0.01}),
+        ("Crisis","War news",{"Equity":-0.10,"Bonds":0.05,"Gold":0.08,"Crypto":-0.06,"Cash":0.01}),
+        ("Disinflation","Inflation cools",{"Equity":0.07,"Bonds":0.06,"Gold":-0.03,"Crypto":0.05,"Cash":0.01}),
+        ("Recession","Slowdown",{"Equity":-0.12,"Bonds":0.06,"Gold":0.07,"Crypto":-0.20,"Cash":0.01}),
+        ("Liquidity","Stimulus",{"Equity":0.10,"Bonds":0.02,"Gold":-0.02,"Crypto":0.18,"Cash":0.01}),
+        ("Inflation","Oil spike",{"Equity":-0.05,"Bonds":-0.03,"Gold":0.07,"Crypto":-0.04,"Cash":0.01}),
+        ("Credit","Bank stress",{"Equity":-0.08,"Bonds":0.05,"Gold":0.06,"Crypto":-0.08,"Cash":0.01}),
+        ("Recovery","Soft landing",{"Equity":0.09,"Bonds":0.03,"Gold":-0.01,"Crypto":0.07,"Cash":0.01}),
+        ("Mixed","Uncertain",{"Equity":0.02,"Bonds":0.01,"Gold":0.01,"Crypto":0.03,"Cash":0.01})
+    ]
 
 # =====================================================
-# REGIME AI ALLOCATION
-# =====================================================
-def regime_ai_allocation(regime):
-    if regime in ["Crisis","Recession","Credit"]:
-        return {"Indian Equity":0.1,"US Equity":0.1,"Bonds":0.35,"Gold":0.3,"Crypto":0.05,"Cash":0.1}
-    elif regime in ["Rate Hike","Inflation"]:
-        return {"Indian Equity":0.15,"US Equity":0.15,"Bonds":0.25,"Gold":0.3,"Crypto":0.05,"Cash":0.1}
-    elif regime in ["Growth Rally","Liquidity"]:
-        return {"Indian Equity":0.3,"US Equity":0.3,"Bonds":0.1,"Gold":0.05,"Crypto":0.2,"Cash":0.05}
-    else:
-        return {"Indian Equity":0.2,"US Equity":0.2,"Bonds":0.2,"Gold":0.2,"Crypto":0.1,"Cash":0.1}
-
-# =====================================================
-# LEARNING INSIGHTS
-# =====================================================
-learning_insights={
-"Rate Hike":"Higher rates compress equity valuations.",
-"Growth Rally":"Risk assets rally strongly.",
-"Crisis":"Risk-off: bonds & gold protect.",
-"Disinflation":"Balanced portfolios benefit.",
-"Recession":"Defensive assets outperform.",
-"Liquidity":"Liquidity boosts markets.",
-"Inflation":"Gold hedges inflation.",
-"Credit":"Financial stress favours safety."
-}
-
-# =====================================================
-# METRICS
+# FUNCTIONS
 # =====================================================
 def max_drawdown(series):
-    cm=series.cummax()
-    dd=(series-cm)/cm
+    cm = series.cummax()
+    dd = (series-cm)/cm
     return dd.min()*100
 
-def behaviour_metrics():
-    df=pd.DataFrame(st.session_state.alloc_history)
-    diversification=(df.gt(0).sum(axis=1).mean()/len(df.columns))*100
-    risk_control=max(0,100-df.std().mean()*100)
-    return round(diversification,2),round(risk_control,2)
+def regime_ai_alloc(regime):
+    if regime in ["Crisis","Recession","Credit"]:
+        return {"Equity":0.1,"Bonds":0.4,"Gold":0.3,"Crypto":0.05,"Cash":0.15}
+    if regime in ["Growth","Liquidity","Recovery"]:
+        return {"Equity":0.4,"Bonds":0.1,"Gold":0.05,"Crypto":0.35,"Cash":0.1}
+    return {"Equity":0.25,"Bonds":0.25,"Gold":0.2,"Crypto":0.15,"Cash":0.15}
 
 def generate_pdf(data,comment):
     buffer=BytesIO()
     doc=SimpleDocTemplate(buffer)
-    elements=[]
     styles=getSampleStyleSheet()
-
-    elements.append(Paragraph("<b>Portfolio Simulation Report</b>",styles['Title']))
-    elements.append(Spacer(1,0.3*inch))
-
-    table=Table(data)
-    table.setStyle(TableStyle([('GRID',(0,0),(-1,-1),0.5,colors.grey)]))
-    elements.append(table)
-    elements.append(Spacer(1,0.3*inch))
-
-    elements.append(Paragraph(comment,styles['Normal']))
-    elements.append(Spacer(1,0.2*inch))
-
-    elements.append(Paragraph("© 2026 Prof. Shalini Velappan",styles['Normal']))
+    elements=[
+        Paragraph("Portfolio Simulation Report",styles['Title']),
+        Spacer(1,20),
+        Table(data,style=[('GRID',(0,0),(-1,-1),0.5,colors.grey)]),
+        Spacer(1,20),
+        Paragraph(comment,styles['Normal'])
+    ]
     doc.build(elements)
     buffer.seek(0)
     return buffer
 
 # =====================================================
-# ENSURE SCENARIOS EXIST (CRASH-PROOF)
-# =====================================================
-if not st.session_state.scenario_sequence or len(st.session_state.scenario_sequence)<10:
-    fixed=[
-("Rate Hike","RBI hikes rates",{"Indian Equity":-0.07,"US Equity":-0.03,"Bonds":0.02,"Gold":0.04,"Crypto":-0.12,"Cash":0.01}),
-("Growth Rally","AI boom",{"Indian Equity":0.06,"US Equity":0.09,"Bonds":-0.02,"Gold":-0.03,"Crypto":0.15,"Cash":0.01}),
-("Crisis","Geopolitical crisis",{"Indian Equity":-0.10,"US Equity":-0.08,"Bonds":0.05,"Gold":0.08,"Crypto":-0.05,"Cash":0.01}),
-("Disinflation","Inflation cools",{"Indian Equity":0.08,"US Equity":0.06,"Bonds":0.07,"Gold":-0.04,"Crypto":0.05,"Cash":0.01}),
-("Recession","Recession fear",{"Indian Equity":-0.12,"US Equity":-0.15,"Bonds":0.06,"Gold":0.07,"Crypto":-0.20,"Cash":0.01})
-]
-    pool=[
-("Liquidity","Liquidity injection",{"Indian Equity":0.11,"US Equity":0.13,"Bonds":0.03,"Gold":-0.02,"Crypto":0.20,"Cash":0.01}),
-("Inflation","Oil shock",{"Indian Equity":-0.06,"US Equity":-0.05,"Bonds":-0.03,"Gold":0.07,"Crypto":-0.04,"Cash":0.01}),
-("Credit","Bank stress",{"Indian Equity":-0.09,"US Equity":-0.08,"Bonds":0.05,"Gold":0.07,"Crypto":-0.10,"Cash":0.01}),
-("Mixed","Mixed signals",{"Indian Equity":0.02,"US Equity":0.05,"Bonds":-0.02,"Gold":0.01,"Crypto":0.06,"Cash":0.01})
-]
-    st.session_state.scenario_sequence=fixed+random.sample(pool,5)
-
-# =====================================================
-# START SCREEN
+# START
 # =====================================================
 st.title("Portfolio War-Room Simulation")
 
 if not st.session_state.initialized:
-    capital=st.number_input("Initial Capital (₹)",value=1000000)
+    cap=st.number_input("Initial Capital",value=1000000)
     if st.button("Start Simulation"):
-        st.session_state.portfolio_value=capital
-        st.session_state.bench_value=capital
-        st.session_state.smart_value=capital
+        st.session_state.portfolio_value=cap
+        st.session_state.bench_value=cap
+        st.session_state.smart_value=cap
         st.session_state.initialized=True
         st.rerun()
     st.stop()
 
-# =====================================================
-# ROUND DASHBOARD
-# =====================================================
 rd=st.session_state.round
 
-st.markdown("### 📊 Portfolio Status")
+# =====================================================
+# LIVE DASHBOARD
+# =====================================================
+st.subheader("Portfolio Status")
+
+leader=max(
+    st.session_state.portfolio_value,
+    st.session_state.bench_value,
+    st.session_state.smart_value
+)
+
+def mark(v): return "🟢" if v==leader else "⚪"
+
 c1,c2,c3,c4=st.columns(4)
 c1.metric("Round",rd)
-c2.metric("Student",f"₹{int(st.session_state.portfolio_value):,}")
-c3.metric("Benchmark",f"₹{int(st.session_state.bench_value):,}")
-c4.metric("AI Model",f"₹{int(st.session_state.smart_value):,}")
+c2.metric(f"{mark(st.session_state.portfolio_value)} Student",f"₹{int(st.session_state.portfolio_value):,}")
+c3.metric(f"{mark(st.session_state.bench_value)} Benchmark",f"₹{int(st.session_state.bench_value):,}")
+c4.metric(f"{mark(st.session_state.smart_value)} AI",f"₹{int(st.session_state.smart_value):,}")
 
 # =====================================================
 # FINAL DASHBOARD
 # =====================================================
 if rd>10:
+
     hist=pd.DataFrame(st.session_state.history)
     bench=pd.DataFrame(st.session_state.bench_history)
     smart=pd.DataFrame(st.session_state.smart_history)
@@ -160,12 +126,11 @@ if rd>10:
     br=bench["Value"].pct_change().dropna()
     sr=smart["Value"].pct_change().dropna()
 
-    sharpe_s=r.mean()/(r.std()+1e-9)*np.sqrt(10)
-    sharpe_b=br.mean()/(br.std()+1e-9)*np.sqrt(10)
-    sharpe_ai=sr.mean()/(sr.std()+1e-9)*np.sqrt(10)
+    sharpe_s=r.mean()/(r.std()+1e-9)
+    sharpe_b=br.mean()/(br.std()+1e-9)
+    sharpe_ai=sr.mean()/(sr.std()+1e-9)
 
     dd_s=max_drawdown(hist["Value"])
-    dd_b=max_drawdown(bench["Value"])
     dd_ai=max_drawdown(smart["Value"])
 
     st.header("Final Performance")
@@ -175,10 +140,9 @@ if rd>10:
     c2.metric("Benchmark Sharpe",round(sharpe_b,3))
     c3.metric("AI Sharpe",round(sharpe_ai,3))
 
-    d1,d2,d3=st.columns(3)
-    d1.metric("Student DD",round(dd_s,1))
-    d2.metric("Benchmark DD",round(dd_b,1))
-    d3.metric("AI DD",round(dd_ai,1))
+    d1,d2=st.columns(2)
+    d1.metric("Student Drawdown",round(dd_s,1))
+    d2.metric("AI Drawdown",round(dd_ai,1))
 
     st.line_chart(pd.DataFrame({
         "Student":hist["Value"],
@@ -186,91 +150,67 @@ if rd>10:
         "AI":smart["Value"]
     }))
 
-    div,risk=behaviour_metrics()
-    st.info(f"Diversification Score: {div} | Risk Control: {risk}")
+    # Behaviour radar
+    df=pd.DataFrame(st.session_state.alloc_history)
+    div=(df.gt(0).sum(axis=1).mean()/len(df.columns))*100
+    risk=max(0,100-df.std().mean()*100)
 
+    fig=go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=[div,risk],
+        theta=["Diversification","Risk Control"],
+        fill='toself'))
+    st.plotly_chart(fig,use_container_width=True)
+
+    comment="Performance summary across regimes."
     data=[
         ["Student Sharpe",round(sharpe_s,3)],
-        ["Benchmark Sharpe",round(sharpe_b,3)],
         ["AI Sharpe",round(sharpe_ai,3)],
-        ["Student Drawdown",round(dd_s,1)],
-        ["AI Drawdown",round(dd_ai,1)]
+        ["Student DD",round(dd_s,1)]
     ]
 
-    pdf_buffer=generate_pdf(data,"Performance summary generated by simulation.")
-
-    st.download_button(
-        "📄 Download PDF Report",
-        data=pdf_buffer,
-        file_name="Portfolio_Report.pdf",
-        mime="application/pdf"
-    )
-
+    pdf=generate_pdf(data,comment)
+    st.download_button("Download PDF",pdf,"report.pdf","application/pdf")
     st.stop()
 
 # =====================================================
-# NORMAL ROUND
+# ROUND PLAY
 # =====================================================
-if rd-1 >= len(st.session_state.scenario_sequence):
-    st.error("Scenario error. Reset simulation.")
-    st.button("Reset",on_click=reset_all)
-    st.stop()
-
 regime,news,returns=st.session_state.scenario_sequence[rd-1]
 
 st.header(f"Round {rd}")
 st.info(news)
 
 alloc={}
-cols=st.columns(3)
-for i,a in enumerate(returns.keys()):
-    alloc[a]=cols[i%3].slider(a,0,100,0,key=f"{a}{rd}")
+for a in returns:
+    alloc[a]=st.slider(a,0,100,0,key=f"{a}{rd}")
 
-total=sum(alloc.values())
-st.write("Total Allocation:",total)
-
-if total==100 and not st.session_state.submitted:
+if sum(alloc.values())==100 and not st.session_state.submitted:
     if st.button("Submit Allocation"):
+
         pv=st.session_state.portfolio_value
         new_val=sum(pv*(alloc[a]/100)*(1+returns[a]) for a in returns)
 
-        bpv=st.session_state.bench_value
-        w=1/len(returns)
-        bench_new=sum(bpv*w*(1+returns[a]) for a in returns)
+        bench_ret=np.mean(list(returns.values()))
+        st.session_state.bench_value*=1+bench_ret
 
-        spv=st.session_state.smart_value
-        smart_alloc=regime_ai_allocation(regime)
-        smart_new=sum(spv*smart_alloc[a]*(1+returns[a]) for a in returns)
+        ai_alloc=regime_ai_alloc(regime)
+        ai_val=sum(st.session_state.smart_value*ai_alloc[a]*(1+returns[a]) for a in returns)
 
         st.session_state.portfolio_value=new_val
-        st.session_state.bench_value=bench_new
-        st.session_state.smart_value=smart_new
+        st.session_state.smart_value=ai_val
 
         st.session_state.history.append({"Round":rd,"Value":new_val})
-        st.session_state.bench_history.append({"Round":rd,"Value":bench_new})
-        st.session_state.smart_history.append({"Round":rd,"Value":smart_new})
+        st.session_state.bench_history.append({"Round":rd,"Value":st.session_state.bench_value})
+        st.session_state.smart_history.append({"Round":rd,"Value":ai_val})
         st.session_state.alloc_history.append(alloc)
 
         st.session_state.submitted=True
         st.rerun()
 
 if st.session_state.submitted:
-    st.success("Returns Revealed")
-    st.write(pd.DataFrame({
-        "Asset":returns.keys(),
-        "Return %":[returns[a]*100 for a in returns]
-    }))
-    st.info(learning_insights.get(regime,""))
-
+    st.success("Returns revealed")
     if st.button("Next Round"):
         st.session_state.round+=1
         st.session_state.submitted=False
         st.rerun()
-
-st.markdown("""
----
-<div style='text-align:center; font-size:13px; color:gray'>
-Portfolio War-Room Simulation  
-© 2026 Prof. Shalini Velappan  
-</div>
-""", unsafe_allow_html=True)
