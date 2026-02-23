@@ -203,20 +203,27 @@ if rd > 10:
     # =====================================================
     # EXCEL EXPORT
     # =====================================================
+    import io
+
     st.subheader("Download Excel Report")
-
-    writer = pd.ExcelWriter("warroom_report.xlsx", engine="xlsxwriter")
-    hist.to_excel(writer, sheet_name="Student")
-    bench.to_excel(writer, sheet_name="Benchmark")
-    smart.to_excel(writer, sheet_name="AI")
-    pd.DataFrame(st.session_state.alloc_history).to_excel(writer, sheet_name="Allocations")
-    pd.DataFrame({"Confidence": st.session_state.confidence_log}).to_excel(writer, sheet_name="Confidence")
-    writer.close()
-
-    with open("warroom_report.xlsx","rb") as f:
-        st.download_button("Download Excel", f, file_name="WarRoom_Report.xlsx")
-
-    st.stop()
+    
+    output = io.BytesIO()
+    
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        hist.to_excel(writer, sheet_name="Student", index=False)
+        bench.to_excel(writer, sheet_name="Benchmark", index=False)
+        smart.to_excel(writer, sheet_name="AI", index=False)
+        pd.DataFrame(st.session_state.alloc_history).to_excel(writer, sheet_name="Allocations", index=False)
+        pd.DataFrame({"Confidence": st.session_state.confidence_log}).to_excel(writer, sheet_name="Confidence", index=False)
+    
+    output.seek(0)
+    
+    st.download_button(
+        label="Download Excel",
+        data=output,
+        file_name="WarRoom_Report.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # =====================================================
 # ROUND
