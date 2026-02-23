@@ -220,11 +220,16 @@ if rd>10:
     dd_ai=max_drawdown(smart["Value"])
 
     st.header("Final Performance")
-    st.metric("Student Sharpe",round(sharpe_s,3))
-    st.metric("Benchmark Sharpe",round(sharpe_b,3))
-    st.metric("AI Sharpe",round(sharpe_ai,3))
-    st.metric("Student DD",round(dd_s,1))
-    st.metric("AI DD",round(dd_ai,1))
+
+    c1,c2,c3 = st.columns(3)
+    c1.metric("Student Sharpe",round(sharpe_s,3))
+    c2.metric("Benchmark Sharpe",round(sharpe_b,3))
+    c3.metric("AI Sharpe",round(sharpe_ai,3))
+
+    d1,d2,d3 = st.columns(3)
+    d1.metric("Student DD",round(dd_s,1))
+    d2.metric("Benchmark DD",round(dd_b,1))
+    d3.metric("AI DD",round(dd_ai,1))
 
     st.line_chart(pd.DataFrame({
         "Student":hist["Value"],
@@ -246,12 +251,14 @@ if rd>10:
     st.plotly_chart(radar,use_container_width=True)
 
     data=[
-["Student Sharpe",round(sharpe_s,3)],
-["Benchmark Sharpe",round(sharpe_b,3)],
-["AI Sharpe",round(sharpe_ai,3)],
-["Student DD",round(dd_s,1)],
-["AI DD",round(dd_ai,1)]
-]
+        ["Student Sharpe",round(sharpe_s,3)],
+        ["Benchmark Sharpe",round(sharpe_b,3)],
+        ["AI Sharpe",round(sharpe_ai,3)],
+        ["Student DD",round(dd_s,1)],
+        ["Benchmark DD",round(dd_b,1)],
+        ["AI DD",round(dd_ai,1)]
+    ]
+
     pdf_buffer = generate_pdf_bytes(data, com)
 
     st.download_button(
@@ -260,7 +267,8 @@ if rd>10:
         file_name="Portfolio_Report.pdf",
         mime="application/pdf"
     )
-    st.stop()
+
+    st.success("Simulation complete. You can download the report above.")
 
 # =====================================================
 # NORMAL ROUND
