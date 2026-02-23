@@ -108,20 +108,39 @@ def commentary(div,risk,overtrade,regret,timing):
 # =====================================================
 # PDF REPORT
 # =====================================================
-def generate_pdf(filename,data,comment):
-    doc=SimpleDocTemplate(filename)
-    elements=[]
-    styles=getSampleStyleSheet()
-    elements.append(Paragraph("<b>Portfolio Simulation Report</b>",styles['Title']))
-    elements.append(Spacer(1,0.3*inch))
-    table=Table(data)
-    table.setStyle(TableStyle([('GRID',(0,0),(-1,-1),0.5,colors.grey)]))
+from io import BytesIO
+
+def generate_pdf_bytes(data, comment):
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer)
+
+    elements = []
+    styles = getSampleStyleSheet()
+
+    elements.append(Paragraph("<b>Portfolio Simulation Report</b>", styles['Title']))
+    elements.append(Spacer(1, 0.3 * inch))
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('GRID',(0,0),(-1,-1),0.5,colors.grey)
+    ]))
     elements.append(table)
-    elements.append(Spacer(1,0.3*inch))
-    elements.append(Paragraph(comment,styles['Normal']))
-    elements.append(Spacer(1,0.2*inch))
-    elements.append(Paragraph("© 2026 Prof. Shalini Velappan",styles['Normal']))
+    elements.append(Spacer(1, 0.3 * inch))
+
+    elements.append(Paragraph("<b>AI Commentary</b>", styles['Heading2']))
+    elements.append(Paragraph(comment, styles['Normal']))
+    elements.append(Spacer(1, 0.3 * inch))
+
+    elements.append(Paragraph(
+        "© 2026 Prof. Shalini Velappan | Academic teaching use only",
+        styles['Normal']
+    ))
+
     doc.build(elements)
+    buffer.seek(0)
+
+    return buffer
 
 # =====================================================
 # TITLE
@@ -233,10 +252,14 @@ if rd>10:
 ["Student DD",round(dd_s,1)],
 ["AI DD",round(dd_ai,1)]
 ]
-    generate_pdf("report.pdf",data,com)
-    with open("report.pdf","rb") as f:
-        st.download_button("Download PDF",f,"report.pdf")
+    pdf_buffer = generate_pdf_bytes(data, com)
 
+    st.download_button(
+        label="📄 Download Performance Report",
+        data=pdf_buffer,
+        file_name="Portfolio_Report.pdf",
+        mime="application/pdf"
+    )
     st.stop()
 
 # =====================================================
