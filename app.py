@@ -248,7 +248,8 @@ if rd > 10:
         file_name="Portfolio_WarRoom_Report.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
+# 🚨 CRITICAL FIX
+    st.stop()
 # =====================================================
 # ROUND EXECUTION
 # =====================================================
