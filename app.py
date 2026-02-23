@@ -504,6 +504,8 @@ if rd > 10:
     # EXCEL EXPORT (STREAMLIT CLOUD SAFE)
     # =====================================================
     st.subheader("Download Excel Report")
+
+    import io
     
     output = io.BytesIO()
     
