@@ -68,19 +68,174 @@ def calculate_drawdown(series):
 # LEARNING INSIGHTS
 # =====================================================
 learning_insights = {
-    "Rate Hike": "Central banks raised policy rates. Growth equities suffer.",
-    "Growth Rally": "Strong earnings & optimism. Risk assets rally.",
-    "Crisis": "Risk-off event. Defensive assets outperform.",
-    "Disinflation": "Inflation cools. Bonds rally.",
-    "Recession": "Growth slowdown. Defensive rotation.",
-    "Liquidity": "Central bank liquidity boosts markets.",
-    "Inflation": "Inflation shock hurts bonds.",
-    "Credit": "Credit stress increases volatility.",
-    "Mixed": "Conflicting signals. Discipline matters.",
-    "Tech Correction": "High-growth tech sells off.",
-    "Commodity Boom": "Commodities surge globally.",
-    "Soft Landing": "Growth slows but avoids recession.",
-    "Dollar Surge": "Strong USD pressures EM."
+
+"Rate Hike": """
+### 🔍 What Happened?
+Central banks raised policy rates.  
+Higher discount rates reduce equity valuations.
+
+### 📊 Asset Behaviour
+• Growth equities fall  
+• Bonds stabilise after shock  
+• Gold hedges uncertainty  
+
+### 🎓 Reflection
+Did you reduce risk?  
+Did you stay overweight equities?
+""",
+
+"Growth Rally": """
+### 🔍 What Happened?
+Strong earnings + tech optimism drove markets higher.
+
+### 📊 Asset Behaviour
+• Equities & crypto rally  
+• Bonds lag  
+• Cash becomes drag  
+
+### 🎓 Reflection
+Did you capture upside or stay defensive?
+""",
+
+"Crisis": """
+### 🔍 What Happened?
+Geopolitical or financial shock triggered risk-off.
+
+### 📊 Asset Behaviour
+• Bonds + gold outperform  
+• Equities fall  
+• Diversification matters most  
+
+### 🎓 Reflection
+Did your portfolio hedge downside?
+""",
+
+"Disinflation": """
+### 🔍 What Happened?
+Inflation cooled, reducing macro uncertainty.
+
+### 📊 Asset Behaviour
+• Bonds rally  
+• Equities recover  
+• Balanced portfolios win  
+
+### 🎓 Reflection
+Did you increase risk at the right time?
+""",
+
+"Recession": """
+### 🔍 What Happened?
+Growth slowdown → defensive rotation.
+
+### 📊 Asset Behaviour
+• Bonds protect  
+• Gold stable  
+• Risk assets fall  
+
+### 🎓 Reflection
+Was your portfolio concentrated?
+""",
+
+"Liquidity": """
+### 🔍 What Happened?
+Central bank liquidity boosted markets.
+
+### 📊 Asset Behaviour
+• Equities surge  
+• Crypto rallies  
+• Cash underperforms  
+
+### 🎓 Reflection
+Did you position for expansion?
+""",
+
+"Inflation": """
+### 🔍 What Happened?
+Inflation shock hit duration assets.
+
+### 📊 Asset Behaviour
+• Bonds fall  
+• Gold hedges  
+• Equities pressured  
+
+### 🎓 Reflection
+Did you hedge inflation?
+""",
+
+"Credit": """
+### 🔍 What Happened?
+Credit tightening increased stress.
+
+### 📊 Asset Behaviour
+• Defensive assets outperform  
+• Risk appetite falls  
+
+### 🎓 Reflection
+Did you rotate defensively?
+""",
+
+"Mixed": """
+### 🔍 What Happened?
+Conflicting signals in markets.
+
+### 📊 Asset Behaviour
+• Balanced allocation helps  
+• Overconfidence hurts  
+
+### 🎓 Reflection
+Did you stay disciplined?
+""",
+
+"Tech Correction": """
+### 🔍 What Happened?
+High-growth tech sold off sharply.
+
+### 📊 Asset Behaviour
+• US equities fall  
+• Crypto drops  
+• Bonds help  
+
+### 🎓 Reflection
+Were you overexposed to growth?
+""",
+
+"Commodity Boom": """
+### 🔍 What Happened?
+Commodity prices surged globally.
+
+### 📊 Asset Behaviour
+• Gold rises  
+• EM equities benefit  
+• Bonds weak  
+
+### 🎓 Reflection
+Did you hold real assets?
+""",
+
+"Soft Landing": """
+### 🔍 What Happened?
+Growth slowed but avoided recession.
+
+### 📊 Asset Behaviour
+• Balanced portfolios win  
+• Low volatility environment  
+
+### 🎓 Reflection
+Did you stay diversified?
+""",
+
+"Dollar Surge": """
+### 🔍 What Happened?
+Strong USD tightened global liquidity.
+
+### 📊 Asset Behaviour
+• EM equities struggle  
+• Gold weak  
+• US assets hold  
+
+### 🎓 Reflection
+Did you diversify globally?
+"""
 }
 
 # =====================================================
